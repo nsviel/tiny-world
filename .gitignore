@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+
+# Construction et paquets
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tests, couverture et analyse
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Éditeurs et système
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Fichiers d'exécution locaux
+*.log
+replays/
