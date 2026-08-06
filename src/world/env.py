@@ -37,7 +37,6 @@ class TinyWorldEnv:
         self.last_events = StepEvents()
         self.terminated = False
         self.truncated = False
-        self._renderer: Any | None = None
         self.reset(seed=seed)
 
     def reset(self, seed: int | None = None) -> tuple[Observation, dict[str, Any]]:
@@ -118,26 +117,7 @@ class TinyWorldEnv:
         reward = calculate_reward(self.last_events, self.config)
         return self._observation(), reward, self.terminated, self.truncated, self._info()
 
-    def render(self) -> None:
-        """Render the current state, lazily importing the optional Pygame frontend."""
-        # Delay frontend imports for headless users.
-        from src.app.state import RenderState
 
-        if self._renderer is None:
-            from src.engine.renderer import Renderer
-
-            self._renderer = Renderer()
-            self._renderer.center_on_agent(self)
-        self._renderer.draw(
-            self,
-            RenderState(agent_name="external", seed=self._seed),
-        )
-
-    def close(self) -> None:
-        """Release renderer resources when rendering was requested."""
-        if self._renderer is not None:
-            self._renderer.close()
-            self._renderer = None
 
     def _observation(self) -> Observation:
         return make_observation(

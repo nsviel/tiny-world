@@ -9,11 +9,12 @@ import pygame
 
 from src.app.state import RenderState
 from src.simulation.actions import Action
-from src.simulation.observations import Observation
 from src.world.entities import Tile
+from .world import WorldRenderer
 
+from .assets import AssetStore
 from .camera import Camera
-from .config import EngineConfig
+from .config import RenderingConfig
 
 
 @dataclass(slots=True)
@@ -28,11 +29,12 @@ class Particle:
 class Renderer:
     """Draw an environment state without owning simulation logic."""
 
-    def __init__(self, title: str = "TinyWorld AI", config: EngineConfig | None = None) -> None:
-        self.config = config or EngineConfig()
+    def __init__(self, title: str = "TinyWorld AI", config: RenderingConfig | None = None) -> None:
+        self.config = config or RenderingConfig()
         pygame.init()
         pygame.display.set_caption(title)
         self.screen = pygame.display.set_mode(self.config.window_size, pygame.RESIZABLE)
+        self.assets = AssetStore(self.config.assets_root)
         self.font = pygame.font.SysFont("dejavusans", 18)
         self.small = pygame.font.SysFont("dejavusans", 14)
         self.large = pygame.font.SysFont("dejavusans", 36, bold=True)
@@ -40,6 +42,12 @@ class Renderer:
             zoom=self.config.zoom_default,
             min_zoom=self.config.zoom_min,
             max_zoom=self.config.zoom_max,
+        )
+        self.world_renderer = WorldRenderer(
+            self.screen,
+            self.camera,
+            self.config,
+            self.assets,
         )
         self.particles: list[Particle] = []
         self._last_food = 0
@@ -79,10 +87,10 @@ class Renderer:
         self.add_food_particles(env)
         self._update_particles(state.frame_dt)
         self.screen.fill((17, 28, 29))
-        self._draw_world(env)
+        self.world_renderer.draw(env, self.viewport)
         self._draw_particles()
         if state.show_observation and state.observation is not None:
-            self._draw_observation(env, state.observation)
+            self.world_renderer.draw_observation(env, state.observation)
         self._draw_panel(
             env,
             state.agent_name,
@@ -94,81 +102,6 @@ class Renderer:
             self._draw_overlay("ÉPISODE TERMINÉ" if state.game_over else "PAUSE",
                                "R : recommencer" if state.game_over else "Espace : reprendre")
         pygame.display.flip()
-
-    def _tile_rect(self, row: int, col: int) -> pygame.Rect:
-        x, y = self.camera.world_to_screen(
-            col * self.config.cell_size,
-            row * self.config.cell_size,
-        )
-        size = math.ceil(self.config.cell_size * self.camera.zoom) + 1
-        return pygame.Rect(x, y, size, size)
-
-    def _draw_world(self, env: Any) -> None:
-        viewport_w, viewport_h = self.viewport
-        clip = self.screen.get_clip()
-        self.screen.set_clip(pygame.Rect(0, 0, viewport_w, viewport_h))
-        for row in range(env.config.height):
-            for col in range(env.config.width):
-                rect = self._tile_rect(row, col)
-                if not rect.colliderect((0, 0, viewport_w, viewport_h)):
-                    continue
-                shade = ((row * 17 + col * 31) % 3) * 4
-                tile = Tile(int(env.world.tiles[row, col]))
-                pygame.draw.rect(self.screen, (74 + shade, 137 + shade, 78 + shade), rect)
-                if tile == Tile.WATER:
-                    pygame.draw.rect(self.screen, (54, 132 + shade, 174 + shade), rect, border_radius=3)
-                    pygame.draw.line(self.screen, (97, 175, 202), (rect.left + 4, rect.centery), (rect.right - 4, rect.centery), 1)
-                elif tile == Tile.TREE:
-                    self._draw_tree(rect)
-                elif tile == Tile.FOOD:
-                    self._draw_food(rect)
-        self._draw_agent(env)
-        self._draw_predator(env)
-        self.screen.set_clip(clip)
-
-    def _draw_tree(self, rect: pygame.Rect) -> None:
-        cx, cy = rect.center
-        scale = self.camera.zoom
-        pygame.draw.ellipse(self.screen, (30, 70, 42), rect.move(round(3*scale), round(4*scale)))
-        pygame.draw.rect(self.screen, (105, 72, 42), (cx-round(3*scale), cy, max(2,round(6*scale)), max(3,round(10*scale))))
-        pygame.draw.circle(self.screen, (30, 92, 48), (cx, cy-round(3*scale)), max(3,round(10*scale)))
-        pygame.draw.circle(self.screen, (46, 116, 58), (cx-round(4*scale), cy-round(6*scale)), max(2,round(7*scale)))
-
-    def _draw_food(self, rect: pygame.Rect) -> None:
-        pygame.draw.ellipse(self.screen, (35, 78, 40), rect.inflate(-rect.width//3, -rect.height//2).move(2, 3))
-        cx, cy = rect.center
-        r = max(2, round(3*self.camera.zoom))
-        for dx, dy in ((-4, 1), (3, -2), (4, 4)):
-            pygame.draw.circle(self.screen, (191, 45, 72), (cx+round(dx*self.camera.zoom), cy+round(dy*self.camera.zoom)), r)
-
-    def _entity_center(self, position: Any) -> tuple[int, int]:
-        cell = self.config.cell_size
-        return self.camera.world_to_screen((position.col + .5) * cell, (position.row + .5) * cell)
-
-    def _draw_agent(self, env: Any) -> None:
-        center = self._entity_center(env.agent.position)
-        radius = max(4, round(9*self.camera.zoom))
-        pygame.draw.ellipse(self.screen, (31, 66, 47), (center[0]-radius, center[1]+radius//2, radius*2, radius))
-        pygame.draw.circle(self.screen, (240, 210, 88), center, radius)
-        delta = env.agent.orientation.delta
-        end = (center[0]+round(delta[1]*radius*1.5), center[1]+round(delta[0]*radius*1.5))
-        pygame.draw.line(self.screen, (255, 250, 220), center, end, max(2, round(3*self.camera.zoom)))
-
-    def _draw_predator(self, env: Any) -> None:
-        center = self._entity_center(env.world.predator.position)
-        radius = max(4, round(10*self.camera.zoom))
-        pygame.draw.ellipse(self.screen, (65, 38, 39), (center[0]-radius, center[1]+radius//2, radius*2, radius))
-        pygame.draw.circle(self.screen, (192, 57, 58), center, radius)
-        pygame.draw.circle(self.screen, (245, 210, 165), (center[0]-radius//3, center[1]-radius//4), max(1,radius//5))
-        pygame.draw.circle(self.screen, (245, 210, 165), (center[0]+radius//3, center[1]-radius//4), max(1,radius//5))
-
-    def _draw_observation(self, env: Any, observation: Observation) -> None:
-        radius = observation.local_grid.shape[1] // 2
-        p = env.agent.position
-        cell = self.config.cell_size
-        x, y = self.camera.world_to_screen((p.col - radius) * cell, (p.row - radius) * cell)
-        size = round(observation.local_grid.shape[1] * cell * self.camera.zoom)
-        pygame.draw.rect(self.screen, (255, 231, 125), (x, y, size, size), max(1, round(2*self.camera.zoom)))
 
     def _draw_particles(self) -> None:
         for particle in self.particles:

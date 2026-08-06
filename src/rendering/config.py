@@ -1,10 +1,12 @@
 """Configuration for the Pygame engine and camera."""
 
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True, slots=True)
-class EngineConfig:
+class RenderingConfig:
+    assets_root: Path | None = None
     window_size: tuple[int, int] = (1180, 780)
     panel_width: int = 300
     viewport_min_width: int = 300

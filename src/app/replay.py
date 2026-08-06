@@ -215,8 +215,8 @@ def main(argv: list[str] | None = None) -> int:
     import pygame
     from src.world.env import TinyWorldEnv
 
-    from src.engine.control import ReplayControls
-    from src.engine.renderer import Renderer
+    from src.rendering.control import ReplayControls
+    from src.rendering.renderer import Renderer
 
     from .state import RenderState
 

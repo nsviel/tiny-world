@@ -3,8 +3,8 @@
 from os import PathLike
 from pathlib import Path
 
-from src.engine.control import Controls
-from src.engine.renderer import Renderer
+from src.rendering.control import Controls
+from src.rendering.renderer import Renderer
 from src.world.env import TinyWorldEnv
 
 from .replay import save_application_replay

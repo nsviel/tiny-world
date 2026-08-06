@@ -73,8 +73,6 @@ while not done:
         Action.MOVE_FORWARD
     )
     done = terminated or truncated
-
-env.close()
 ```
 
 Available actions are `IDLE`, `MOVE_FORWARD`, `TURN_LEFT`, `TURN_RIGHT`, and `EAT`.
