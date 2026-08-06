@@ -38,7 +38,7 @@ Save and watch a replay:
 
 ```bash
 python -m src.main --agent rule --replay run.json
-python -m src.engine.replay run.json
+python -m src.app.replay run.json
 ```
 
 Use `--agent random` to run the random policy instead.

@@ -7,6 +7,7 @@ from typing import Any
 
 import pygame
 
+from src.app.state import RenderState
 from src.simulation.actions import Action
 from src.simulation.observations import Observation
 from src.world.entities import Tile
@@ -71,21 +72,24 @@ class Renderer:
                                            math.cos(angle) * speed, math.sin(angle) * speed, .7))
         self._last_food = env.agent.food_eaten
 
-    def draw(self, env: Any, *, agent_name: str, seed: int | None, total_reward: float,
-             observation: Observation | None = None, paused: bool = False,
-             game_over: bool = False, last_action: Action | None = None,
-             dt: float = 0.0) -> None:
+    def draw(self, env: Any, state: RenderState) -> None:
         self.add_food_particles(env)
-        self._update_particles(dt)
+        self._update_particles(state.frame_dt)
         self.screen.fill((17, 28, 29))
         self._draw_world(env)
         self._draw_particles()
-        if observation is not None:
-            self._draw_observation(env, observation)
-        self._draw_panel(env, agent_name, seed, total_reward, last_action)
-        if paused or game_over:
-            self._draw_overlay("ÉPISODE TERMINÉ" if game_over else "PAUSE",
-                               "R : recommencer" if game_over else "Espace : reprendre")
+        if state.show_observation and state.observation is not None:
+            self._draw_observation(env, state.observation)
+        self._draw_panel(
+            env,
+            state.agent_name,
+            state.seed,
+            state.total_reward,
+            state.last_action,
+        )
+        if state.paused or state.game_over:
+            self._draw_overlay("ÉPISODE TERMINÉ" if state.game_over else "PAUSE",
+                               "R : recommencer" if state.game_over else "Espace : reprendre")
         pygame.display.flip()
 
     def _tile_rect(self, row: int, col: int) -> pygame.Rect:

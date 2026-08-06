@@ -1,6 +1,6 @@
 """Validation helpers for world configuration."""
 
-from src.config import WorldConfig
+from src.app.config import WorldConfig
 
 
 def validate_world_config(config: WorldConfig) -> None:

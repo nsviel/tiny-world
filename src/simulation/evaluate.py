@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 from secrets import randbits
 
 from src.agents import BaseAgent, RandomAgent, RuleBasedAgent
-from src.config import WorldConfig
+from src.app.config import WorldConfig
 from src.world.env import TinyWorldEnv
 
 from .metrics import EpisodeAggregate, EpisodeMetrics, aggregate_episodes

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from src.config import WorldConfig
+from src.app.config import WorldConfig
 
 
 @dataclass(frozen=True, slots=True)

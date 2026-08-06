@@ -8,11 +8,15 @@ from enum import Enum
 import json
 from os import PathLike
 from pathlib import Path
-from typing import Any
+import time
+from typing import TYPE_CHECKING, Any
 
-from src.config import WorldConfig
+from src.app.config import WorldConfig
 from src.simulation.actions import Action
 from src.world.entities import Orientation, Position
+
+if TYPE_CHECKING:
+    from .state import ApplicationState
 
 JSONValue = None | bool | int | float | str | list["JSONValue"] | dict[str, "JSONValue"]
 
@@ -210,8 +214,10 @@ def main(argv: list[str] | None = None) -> int:
     import pygame
     from src.world.env import TinyWorldEnv
 
-    from .control import ReplayControls
-    from .renderer import Renderer
+    from src.engine.control import ReplayControls
+    from src.engine.renderer import Renderer
+
+    from .state import RenderState
 
     config_fields = WorldConfig.__dataclass_fields__
     config_values: dict[str, Any] = {
@@ -224,6 +230,10 @@ def main(argv: list[str] | None = None) -> int:
     clock = pygame.time.Clock()
     index = 0
     controls = ReplayControls()
+    render_state = RenderState(
+        agent_name=str(replay.metadata.get("agent", "replay")),
+        seed=replay.seed,
+    )
     accumulator = 0.0
     total_reward = 0.0
     while controls.running:
@@ -248,14 +258,27 @@ def main(argv: list[str] | None = None) -> int:
                 if index == 0:
                     time.sleep(.25); total_reward = 0.0
         current = replay.steps[index - 1]
-        renderer.draw(env, agent_name=str(replay.metadata.get("agent", "replay")),
-                      seed=replay.seed, total_reward=total_reward, last_action=current.action,
-                      paused=controls.paused, dt=dt)
+        render_state.total_reward = total_reward
+        render_state.last_action = current.action
+        render_state.paused = controls.paused
+        render_state.frame_dt = dt
+        renderer.draw(env, render_state)
     renderer.close()
     return 0
 
 
-__all__ = ["ReplayRecorder", "ReplayStep"]
+def save_application_replay(
+    state: "ApplicationState",
+    path: str | PathLike[str],
+) -> Path:
+    """Add save metadata and persist the current application replay."""
+    state.recorder.metadata["saved_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    destination = state.recorder.save(path)
+    print(f"Replay saved to: {destination}")
+    return destination
+
+
+__all__ = ["ReplayRecorder", "ReplayStep", "save_application_replay"]
 
 
 if __name__ == "__main__":

@@ -4,10 +4,10 @@ from typing import Any
 
 import numpy as np
 
-from src.config import WorldConfig
-from src.game.actions import Action
-from src.game.observations import Observation, make_observation
-from src.game.rewards import StepEvents, calculate_reward
+from src.app.config import WorldConfig
+from src.simulation.actions import Action
+from src.simulation.observations import Observation, make_observation
+from src.simulation.rewards import StepEvents, calculate_reward
 
 from .entities import Agent, Orientation, Tile
 from .validation import validate_world_config
@@ -119,6 +119,8 @@ class TinyWorldEnv:
 
     def render(self) -> None:
         """Render the current state, lazily importing the optional Pygame frontend."""
+        from src.app.state import RenderState
+
         if self._renderer is None:
             from src.engine.renderer import Renderer
 
@@ -126,9 +128,7 @@ class TinyWorldEnv:
             self._renderer.center_on_agent(self)
         self._renderer.draw(
             self,
-            agent_name="external",
-            seed=self._seed,
-            total_reward=0.0,
+            RenderState(agent_name="external", seed=self._seed),
         )
 
     def close(self) -> None:

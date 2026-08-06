@@ -1,7 +1,7 @@
 """TinyWorld AI: a small deterministic, headless survival environment."""
 
-from .config import WorldConfig
-from .game import (
+from .app.config import WorldConfig
+from .simulation import (
     OBSERVATION_CHANNELS,
     SCALAR_FEATURES,
     Action,

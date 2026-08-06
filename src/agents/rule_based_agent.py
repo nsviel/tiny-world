@@ -4,8 +4,8 @@ import random
 
 import numpy as np
 
-from src.game.actions import Action
-from src.game.observations import Observation
+from src.simulation.actions import Action
+from src.simulation.observations import Observation
 from src.world.entities import Orientation
 
 from .base import BaseAgent

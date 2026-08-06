@@ -2,8 +2,8 @@
 
 from abc import ABC, abstractmethod
 
-from src.game.actions import Action
-from src.game.observations import Observation
+from src.simulation.actions import Action
+from src.simulation.observations import Observation
 
 
 class BaseAgent(ABC):
