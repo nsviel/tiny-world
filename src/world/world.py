@@ -7,12 +7,14 @@ import numpy as np
 from src.config import WorldConfig
 
 from .entities import Position, Predator, Tile
+from .validation import validate_world_config
 
 
 class World:
     """Mutable public world state backed by a ``(height, width)`` uint8 array."""
 
     def __init__(self, config: WorldConfig, seed: int | None = None) -> None:
+        validate_world_config(config)
         self.config = config
         self.seed = seed
         self.rng = np.random.default_rng(seed)

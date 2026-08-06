@@ -10,6 +10,7 @@ from src.game.observations import Observation, make_observation
 from src.game.rewards import StepEvents, calculate_reward
 
 from .entities import Agent, Orientation, Tile
+from .validation import validate_world_config
 from .world import World
 
 
@@ -27,6 +28,7 @@ class TinyWorldEnv:
 
     def __init__(self, config: WorldConfig | None = None, seed: int | None = None) -> None:
         self.config = config or WorldConfig()
+        validate_world_config(self.config)
         self._seed = seed
         self.world: World
         self.agent: Agent

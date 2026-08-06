@@ -25,19 +25,19 @@ micromamba run -n venv pip install -e ".[dev]"
 Start the visual simulation:
 
 ```bash
-python -m src.game.play --agent rule --seed 42
+python -m src.main --agent rule --seed 42
 ```
 
 Run several episodes without rendering:
 
 ```bash
-python -m src.game.evaluate --agent rule --episodes 100 --seed 42
+python -m src.simulation.evaluate --agent rule --episodes 100 --seed 42
 ```
 
 Save and watch a replay:
 
 ```bash
-python -m src.game.play --agent rule --replay run.json
+python -m src.main --agent rule --replay run.json
 python -m src.engine.replay run.json
 ```
 

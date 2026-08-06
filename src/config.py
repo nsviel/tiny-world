@@ -35,21 +35,3 @@ class WorldConfig:
     predator_hit_reward: float = -5.0
     death_reward: float = -20.0
     discovery_reward: float = 0.02
-
-    def __post_init__(self) -> None:
-        if self.width < 11 or self.height < 11:
-            raise ValueError("width and height must both be at least 11")
-        if self.view_size < 3 or self.view_size % 2 == 0:
-            raise ValueError("view_size must be an odd integer >= 3")
-        if not 0 <= self.water_ratio < 1 or not 0 <= self.tree_ratio < 1:
-            raise ValueError("terrain ratios must be in [0, 1)")
-        if self.water_ratio + self.tree_ratio >= 0.75:
-            raise ValueError("terrain ratios leave too little traversable ground")
-        if self.food_count < 0:
-            raise ValueError("food_count cannot be negative")
-        if self.initial_energy <= 0 or self.max_energy <= 0:
-            raise ValueError("energy limits must be positive")
-        if self.max_steps is not None and self.max_steps <= 0:
-            raise ValueError("max_steps must be positive or None")
-        if self.predator_detection_radius < 0:
-            raise ValueError("predator_detection_radius cannot be negative")

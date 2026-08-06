@@ -1,4 +1,4 @@
-"""Gameplay types, rewards, metrics, and command-line frontends."""
+"""Simulation actions, observations, rewards, and metrics."""
 
 from .actions import Action
 from .metrics import EpisodeAggregate, EpisodeMetrics, MeanStd, aggregate_episodes

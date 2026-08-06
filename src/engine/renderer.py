@@ -7,8 +7,8 @@ from typing import Any
 
 import pygame
 
-from src.game.actions import Action
-from src.game.observations import Observation
+from src.simulation.actions import Action
+from src.simulation.observations import Observation
 from src.world.entities import Tile
 
 from .camera import Camera
@@ -54,6 +54,11 @@ class Renderer:
 
     def zoom(self, amount: int, anchor: tuple[int, int]) -> None:
         self.camera.set_zoom(self.camera.zoom * (1.12 ** amount), anchor)
+
+    def reset_effects(self) -> None:
+        """Clear transient visual state for a new episode."""
+        self.particles.clear()
+        self._last_food = 0
 
     def add_food_particles(self, env: Any) -> None:
         if env.agent.food_eaten <= self._last_food:

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from src.config import WorldConfig
-from src.game.actions import Action
+from src.simulation.actions import Action
 from src.world.entities import Orientation, Position
 
 JSONValue = None | bool | int | float | str | list["JSONValue"] | dict[str, "JSONValue"]
@@ -210,6 +210,7 @@ def main(argv: list[str] | None = None) -> int:
     import pygame
     from src.world.env import TinyWorldEnv
 
+    from .control import ReplayControls
     from .renderer import Renderer
 
     config_fields = WorldConfig.__dataclass_fields__
@@ -222,24 +223,16 @@ def main(argv: list[str] | None = None) -> int:
     renderer.center_on_agent(env)
     clock = pygame.time.Clock()
     index = 0
-    running = True
-    paused = False
+    controls = ReplayControls()
     accumulator = 0.0
     total_reward = 0.0
-    while running:
+    while controls.running:
         dt = min(clock.tick(60) / 1000.0, .1)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                paused = not paused
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                index = 0; total_reward = 0.0
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-                renderer.center_on_agent(env)
-            elif event.type == pygame.MOUSEWHEEL:
-                renderer.zoom(event.y, pygame.mouse.get_pos())
-        if not paused:
+        commands = controls.update(renderer, env)
+        if commands.restart:
+            index = 0
+            total_reward = 0.0
+        if not controls.paused:
             accumulator += dt * args.fps
             if accumulator >= 1.0:
                 accumulator -= 1.0
@@ -257,7 +250,7 @@ def main(argv: list[str] | None = None) -> int:
         current = replay.steps[index - 1]
         renderer.draw(env, agent_name=str(replay.metadata.get("agent", "replay")),
                       seed=replay.seed, total_reward=total_reward, last_action=current.action,
-                      paused=paused, dt=dt)
+                      paused=controls.paused, dt=dt)
     renderer.close()
     return 0
 
