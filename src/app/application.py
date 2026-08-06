@@ -33,6 +33,7 @@ class App:
 
     def update(self, dt: float) -> None:
         """Process input, advance the simulation, and draw one frame."""
+        # Keep orchestration outside rendering and simulation.
         update_application(
             self.state,
             self.env,

@@ -40,6 +40,7 @@ class RuleBasedAgent(BaseAgent):
         if observation.scalar_features.size < 2:
             raise ValueError("scalar_features must contain orientation_norm")
 
+        # Recover heading without reading environment state.
         self._orientation = Orientation(
             round(float(observation.scalar_features[1]) * 3.0) % 4
         )
@@ -48,6 +49,7 @@ class RuleBasedAgent(BaseAgent):
         if grid[1, centre[0], centre[1]] > 0.5:
             return Action.EAT
 
+        # Channel indices follow the observation contract.
         predators = self._positions(grid[2])
         nearby = [
             position

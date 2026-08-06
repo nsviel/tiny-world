@@ -17,6 +17,7 @@ class World:
         validate_world_config(config)
         self.config = config
         self.seed = seed
+        # One seeded stream controls all world randomness.
         self.rng = np.random.default_rng(seed)
         self.tiles = np.empty((config.height, config.width), dtype=np.uint8)
         self.spawn_position = Position(0, 0)
@@ -39,9 +40,7 @@ class World:
     def generate(self) -> None:
         """Generate terrain, retaining one connected traversable land mass."""
         cfg = self.config
-        # Repeated neighbourhood averaging turns white noise into broad, readable
-        # biomes. Quantiles preserve the configured terrain proportions while
-        # naturally leaving connected clearings between forests and ponds.
+        # Smooth noise creates broad, readable biomes.
         water_noise = self._smooth_noise(self.rng.random((cfg.height, cfg.width)), passes=4)
         forest_noise = self._smooth_noise(self.rng.random((cfg.height, cfg.width)), passes=3)
         self.tiles.fill(Tile.GROUND)
@@ -57,9 +56,10 @@ class World:
         components = self._ground_components()
         if not components:
             raise RuntimeError("world generation produced no traversable ground")
+        # Keep the largest connected ground component.
         land = max(components, key=len)
         land_set = set(land)
-        # Isolated pockets cannot host entities and are made visibly impassable.
+        # Seal unusable isolated pockets with trees.
         for component in components:
             if component is not land:
                 for pos in component:
@@ -89,6 +89,7 @@ class World:
         return noise
 
     def _ground_components(self) -> list[list[Position]]:
+        # Flood-fill every traversable component.
         seen: set[Position] = set()
         components: list[list[Position]] = []
         for row in range(self.config.height):

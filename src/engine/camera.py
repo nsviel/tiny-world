@@ -7,11 +7,11 @@ from dataclasses import dataclass
 class Camera:
     """A zoomable camera whose coordinates are expressed in world pixels."""
 
+    min_zoom: float
+    max_zoom: float
     x: float = 0.0
     y: float = 0.0
     zoom: float = 1.0
-    min_zoom: float = 0.45
-    max_zoom: float = 2.5
 
     def world_to_screen(self, x: float, y: float) -> tuple[int, int]:
         return round((x - self.x) * self.zoom), round((y - self.y) * self.zoom)
@@ -24,6 +24,7 @@ class Camera:
         self.y += dy / self.zoom
 
     def set_zoom(self, value: float, anchor: tuple[int, int] | None = None) -> None:
+        # Keep the anchored world point stationary.
         old_world = self.screen_to_world(*anchor) if anchor else None
         self.zoom = max(self.min_zoom, min(self.max_zoom, value))
         if anchor and old_world:

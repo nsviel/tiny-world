@@ -31,7 +31,7 @@ def _position_from_dict(value: Mapping[str, Any]) -> Position:
 
 def _json_value(value: Any) -> JSONValue:
     """Convert common engine values into portable JSON-compatible values."""
-    # IntEnum subclasses int, so Enums must be handled before scalar values.
+    # Preserve symbolic names before scalar coercion.
     if isinstance(value, Enum):
         return value.name
     if isinstance(value, Position):
@@ -155,6 +155,7 @@ class ReplayRecorder:
         return step
 
     def to_dict(self) -> dict[str, JSONValue]:
+        # Version the portable replay schema.
         return {
             "version": self.FORMAT_VERSION,
             "seed": self.seed,
@@ -210,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
     if not replay.steps:
         parser.error("le replay ne contient aucune étape")
 
-    # Imports stay local so recording and headless evaluation never require Pygame.
+    # Keep headless replay recording free of Pygame.
     import pygame
     from src.world.env import TinyWorldEnv
 
@@ -243,6 +244,7 @@ def main(argv: list[str] | None = None) -> int:
             index = 0
             total_reward = 0.0
         if not controls.paused:
+            # Decouple replay cadence from render frames.
             accumulator += dt * args.fps
             if accumulator >= 1.0:
                 accumulator -= 1.0

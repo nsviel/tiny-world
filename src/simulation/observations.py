@@ -43,11 +43,13 @@ def make_observation(
     max_steps: int | None,
 ) -> Observation:
     radius = view_size // 2
+    # Channels stay world-aligned around the agent.
     local = np.zeros((4, view_size, view_size), dtype=np.float32)
     height, width = tiles.shape
     for vr, row in enumerate(range(agent.position.row - radius, agent.position.row + radius + 1)):
         for vc, col in enumerate(range(agent.position.col - radius, agent.position.col + radius + 1)):
             if not (0 <= row < height and 0 <= col < width):
+                # Treat unseen map edges as obstacles.
                 local[0, vr, vc] = 1.0
                 continue
             tile = Tile(int(tiles[row, col]))

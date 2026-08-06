@@ -25,6 +25,7 @@ def update_application(
         restart_episode(state, env, renderer)
 
     if not controls.paused and not state.game_over:
+        # Convert variable frame time into fixed simulation steps.
         state.accumulator += dt * controls.speed
         while state.accumulator >= 1.0 and not state.game_over:
             state.accumulator -= 1.0

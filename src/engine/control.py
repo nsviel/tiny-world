@@ -93,7 +93,7 @@ class Controls:
     @staticmethod
     def _move_camera(renderer: Any, dt: float) -> None:
         keys = pygame.key.get_pressed()
-        distance = 380 * dt
+        distance = renderer.config.camera_pan_speed * dt
         if keys[pygame.K_LEFT]:
             renderer.camera.pan(-distance, 0)
         if keys[pygame.K_RIGHT]:

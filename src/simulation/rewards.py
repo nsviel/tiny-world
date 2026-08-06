@@ -16,6 +16,7 @@ class StepEvents:
 
 def calculate_reward(events: StepEvents, config: WorldConfig) -> float:
     """Return the additive reward for a transition."""
+    # Compose reward from transition events.
     reward = config.step_reward
     if events.invalid_action:
         reward += config.invalid_reward

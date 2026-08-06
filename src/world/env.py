@@ -43,6 +43,7 @@ class TinyWorldEnv:
     def reset(self, seed: int | None = None) -> tuple[Observation, dict[str, Any]]:
         if seed is not None:
             self._seed = seed
+        # Reusing a seed reproduces the full world.
         self.world = World(self.config, self._seed)
         self.agent = Agent(
             position=self.world.spawn_position,
@@ -119,6 +120,7 @@ class TinyWorldEnv:
 
     def render(self) -> None:
         """Render the current state, lazily importing the optional Pygame frontend."""
+        # Delay frontend imports for headless users.
         from src.app.state import RenderState
 
         if self._renderer is None:
@@ -153,6 +155,7 @@ class TinyWorldEnv:
         row, col = self.agent.position.row, self.agent.position.col
         r0, r1 = max(0, row - radius), min(self.config.height, row + radius + 1)
         c0, c1 = max(0, col - radius), min(self.config.width, col + radius + 1)
+        # Reward only newly visible cells.
         before = int(self.discovered[r0:r1, c0:c1].sum())
         self.discovered[r0:r1, c0:c1] = True
         return int(self.discovered[r0:r1, c0:c1].sum()) - before

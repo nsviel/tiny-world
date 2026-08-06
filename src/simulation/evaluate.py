@@ -72,6 +72,7 @@ def evaluate(
     env = TinyWorldEnv(config=WorldConfig(max_steps=max_steps), seed=seed)
     results: list[EpisodeMetrics] = []
     for episode_index in range(episodes):
+        # Derive reproducible, distinct episode streams.
         episode_seed = seed + episode_index
         observation, _ = env.reset(seed=episode_seed)
         policy.reset(seed=episode_seed)

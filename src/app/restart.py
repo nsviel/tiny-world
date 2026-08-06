@@ -46,6 +46,7 @@ def restart_episode(
     renderer: Renderer,
 ) -> None:
     """Reset all episode-specific values in an existing application state."""
+    # Reuse the seed for an identical episode.
     observation, _ = env.reset(state.seed)
     policy = _create_agent(state.agent_name, state.seed)
     policy.reset(state.seed)

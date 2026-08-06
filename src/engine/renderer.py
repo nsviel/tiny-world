@@ -13,11 +13,7 @@ from src.simulation.observations import Observation
 from src.world.entities import Tile
 
 from .camera import Camera
-
-WINDOW = (1180, 780)
-PANEL_WIDTH = 300
-VIEWPORT = (WINDOW[0] - PANEL_WIDTH, WINDOW[1])
-CELL = 28
+from .config import EngineConfig
 
 
 @dataclass(slots=True)
@@ -32,14 +28,19 @@ class Particle:
 class Renderer:
     """Draw an environment state without owning simulation logic."""
 
-    def __init__(self, title: str = "TinyWorld AI") -> None:
+    def __init__(self, title: str = "TinyWorld AI", config: EngineConfig | None = None) -> None:
+        self.config = config or EngineConfig()
         pygame.init()
         pygame.display.set_caption(title)
-        self.screen = pygame.display.set_mode(WINDOW, pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(self.config.window_size, pygame.RESIZABLE)
         self.font = pygame.font.SysFont("dejavusans", 18)
         self.small = pygame.font.SysFont("dejavusans", 14)
         self.large = pygame.font.SysFont("dejavusans", 36, bold=True)
-        self.camera = Camera()
+        self.camera = Camera(
+            zoom=self.config.zoom_default,
+            min_zoom=self.config.zoom_min,
+            max_zoom=self.config.zoom_max,
+        )
         self.particles: list[Particle] = []
         self._last_food = 0
         self._rng = random.Random(7)
@@ -47,14 +48,15 @@ class Renderer:
     @property
     def viewport(self) -> tuple[int, int]:
         width, height = self.screen.get_size()
-        return max(300, width - PANEL_WIDTH), height
+        return max(self.config.viewport_min_width, width - self.config.panel_width), height
 
     def center_on_agent(self, env: Any) -> None:
         position = env.agent.position
-        self.camera.center_on((position.col + .5) * CELL, (position.row + .5) * CELL, self.viewport)
+        cell = self.config.cell_size
+        self.camera.center_on((position.col + .5) * cell, (position.row + .5) * cell, self.viewport)
 
     def zoom(self, amount: int, anchor: tuple[int, int]) -> None:
-        self.camera.set_zoom(self.camera.zoom * (1.12 ** amount), anchor)
+        self.camera.set_zoom(self.camera.zoom * (self.config.zoom_step ** amount), anchor)
 
     def reset_effects(self) -> None:
         """Clear transient visual state for a new episode."""
@@ -68,7 +70,8 @@ class Renderer:
         for _ in range(14):
             angle = self._rng.random() * math.tau
             speed = self._rng.uniform(20, 70)
-            self.particles.append(Particle((p.col + .5) * CELL, (p.row + .5) * CELL,
+            self.particles.append(Particle((p.col + .5) * self.config.cell_size,
+                                           (p.row + .5) * self.config.cell_size,
                                            math.cos(angle) * speed, math.sin(angle) * speed, .7))
         self._last_food = env.agent.food_eaten
 
@@ -93,8 +96,11 @@ class Renderer:
         pygame.display.flip()
 
     def _tile_rect(self, row: int, col: int) -> pygame.Rect:
-        x, y = self.camera.world_to_screen(col * CELL, row * CELL)
-        size = math.ceil(CELL * self.camera.zoom) + 1
+        x, y = self.camera.world_to_screen(
+            col * self.config.cell_size,
+            row * self.config.cell_size,
+        )
+        size = math.ceil(self.config.cell_size * self.camera.zoom) + 1
         return pygame.Rect(x, y, size, size)
 
     def _draw_world(self, env: Any) -> None:
@@ -136,7 +142,8 @@ class Renderer:
             pygame.draw.circle(self.screen, (191, 45, 72), (cx+round(dx*self.camera.zoom), cy+round(dy*self.camera.zoom)), r)
 
     def _entity_center(self, position: Any) -> tuple[int, int]:
-        return self.camera.world_to_screen((position.col+.5)*CELL, (position.row+.5)*CELL)
+        cell = self.config.cell_size
+        return self.camera.world_to_screen((position.col + .5) * cell, (position.row + .5) * cell)
 
     def _draw_agent(self, env: Any) -> None:
         center = self._entity_center(env.agent.position)
@@ -158,8 +165,9 @@ class Renderer:
     def _draw_observation(self, env: Any, observation: Observation) -> None:
         radius = observation.local_grid.shape[1] // 2
         p = env.agent.position
-        x, y = self.camera.world_to_screen((p.col-radius)*CELL, (p.row-radius)*CELL)
-        size = round(observation.local_grid.shape[1]*CELL*self.camera.zoom)
+        cell = self.config.cell_size
+        x, y = self.camera.world_to_screen((p.col - radius) * cell, (p.row - radius) * cell)
+        size = round(observation.local_grid.shape[1] * cell * self.camera.zoom)
         pygame.draw.rect(self.screen, (255, 231, 125), (x, y, size, size), max(1, round(2*self.camera.zoom)))
 
     def _draw_particles(self) -> None:
@@ -180,8 +188,9 @@ class Renderer:
     def _draw_panel(self, env: Any, name: str, seed: int | None, reward: float,
                     action: Action | None) -> None:
         width, height = self.screen.get_size()
-        left = width - PANEL_WIDTH
-        pygame.draw.rect(self.screen, (24, 37, 39), (left, 0, PANEL_WIDTH, height))
+        panel_width = self.config.panel_width
+        left = width - panel_width
+        pygame.draw.rect(self.screen, (24, 37, 39), (left, 0, panel_width, height))
         pygame.draw.line(self.screen, (56, 79, 76), (left, 0), (left, height), 2)
         self.screen.blit(self.font.render("TINY WORLD  AI", True, (237, 230, 196)), (left+24, 24))
         labels = [("Agent", name), ("Énergie", f"{env.agent.energy:.1f}"),
@@ -192,11 +201,11 @@ class Renderer:
         for label, value in labels:
             self.screen.blit(self.small.render(label.upper(), True, (132, 157, 148)), (left+24, y))
             self.screen.blit(self.font.render(value, True, (235, 239, 218)), (left+140, y-3)); y += 34
-        bar = pygame.Rect(left+24, y+4, PANEL_WIDTH-48, 18)
+        bar = pygame.Rect(left+24, y+4, panel_width-48, 18)
         pygame.draw.rect(self.screen, (54, 65, 62), bar, border_radius=8)
         fill = bar.copy(); fill.width = round(bar.width * max(0, env.agent.energy/env.config.max_energy))
         pygame.draw.rect(self.screen, (72, 190, 112) if env.agent.energy > 30 else (218, 79, 67), fill, border_radius=8)
-        self._draw_minimap(env, pygame.Rect(left+24, y+55, PANEL_WIDTH-48, PANEL_WIDTH-48))
+        self._draw_minimap(env, pygame.Rect(left+24, y+55, panel_width-48, panel_width-48))
         hints = "Espace pause · R reset · O vision\nMolette zoom · clic droit/glisser\nFlèches caméra · C recentrer"
         for i, line in enumerate(hints.splitlines()):
             self.screen.blit(self.small.render(line, True, (143, 158, 151)), (left+24, height-78+i*20))

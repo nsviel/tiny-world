@@ -25,6 +25,7 @@ class RandomAgent(BaseAgent):
     def reset(self, seed: int | None = None) -> None:
         if seed is not None:
             self._seed = seed
+        # Restart the deterministic action stream.
         self._rng.seed(self._seed)
 
     def act(self, observation: Observation) -> Action:
