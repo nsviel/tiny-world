@@ -11,7 +11,9 @@ class ControlCommands:
     """One-frame commands consumed by the application loop."""
 
     restart: bool = False
+    toggle_auto_loop: bool = False
     selected_agent: str | None = None
+    new_seed: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,15 +56,24 @@ class Controls:
         self.speed = speed
         self._dragging = False
 
-    def update(self, renderer: Any, env: Any, dt: float) -> ControlCommands:
+    def update(self, renderer: Any, env: Any, state: Any, dt: float) -> ControlCommands:
         restart = False
+        toggle_auto_loop = False
         selected_agent: str | None = None
+        new_seed: int | None = None
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.MOUSEWHEEL:
                 renderer.zoom(event.y, pygame.mouse.get_pos())
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if renderer.panel.contains_seed(event.pos):
+                    state.seed_input_active = True
+                    state.seed_input = "" if state.seed is None else str(state.seed)
+                else:
+                    state.seed_input_active = False
+                    toggle_auto_loop = renderer.panel.contains_auto_loop(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 self._dragging = True
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
@@ -70,6 +81,18 @@ class Controls:
             elif event.type == pygame.MOUSEMOTION and self._dragging:
                 renderer.camera.pan(-event.rel[0], -event.rel[1])
             elif event.type == pygame.KEYDOWN:
+                if state.seed_input_active:
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        if state.seed_input:
+                            new_seed = int(state.seed_input)
+                        state.seed_input_active = False
+                    elif event.key == pygame.K_ESCAPE:
+                        state.seed_input_active = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        state.seed_input = state.seed_input[:-1]
+                    elif event.unicode.isdigit() and len(state.seed_input) < 18:
+                        state.seed_input += event.unicode
+                    continue
                 if event.key == pygame.K_SPACE:
                     self.paused = not self.paused
                 elif event.key == pygame.K_r:
@@ -88,7 +111,12 @@ class Controls:
                     selected_agent = "rule"
 
         self._move_camera(renderer, dt)
-        return ControlCommands(restart=restart, selected_agent=selected_agent)
+        return ControlCommands(
+            restart=restart,
+            toggle_auto_loop=toggle_auto_loop,
+            selected_agent=selected_agent,
+            new_seed=new_seed,
+        )
 
     @staticmethod
     def _move_camera(renderer: Any, dt: float) -> None:

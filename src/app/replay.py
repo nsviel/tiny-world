@@ -11,8 +11,9 @@ from pathlib import Path
 import time
 from typing import TYPE_CHECKING, Any
 
-from src.app.config import WorldConfig
 from src.simulation.actions import Action
+from src.simulation.config import SimulationConfig
+from src.world.config import WorldConfig
 from src.world.entities import Orientation, Position
 
 if TYPE_CHECKING:
@@ -99,7 +100,7 @@ class ReplayRecorder:
     def __init__(
         self,
         seed: int | None = None,
-        config: WorldConfig | Mapping[str, Any] | None = None,
+        config: Mapping[str, Any] | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> None:
         self.seed = seed
@@ -215,17 +216,24 @@ def main(argv: list[str] | None = None) -> int:
     import pygame
     from src.world.env import TinyWorldEnv
 
-    from src.rendering.control import ReplayControls
+    from src.rendering.engine.control import ReplayControls
     from src.rendering.renderer import Renderer
 
     from .state import RenderState
 
-    config_fields = WorldConfig.__dataclass_fields__
-    config_values: dict[str, Any] = {
-        key: value for key, value in replay.config.items() if key in config_fields
-    }
-    config = WorldConfig(**config_values)
-    env = TinyWorldEnv(config, replay.seed)
+    world_fields = WorldConfig.__dataclass_fields__
+    simulation_fields = SimulationConfig.__dataclass_fields__
+    world_values = replay.config.get("world", replay.config)
+    simulation_values = replay.config.get("simulation", replay.config)
+    if not isinstance(world_values, Mapping) or not isinstance(simulation_values, Mapping):
+        raise ValueError("replay config must contain configuration objects")
+    world_config = WorldConfig(
+        **{key: value for key, value in world_values.items() if key in world_fields}
+    )
+    simulation_config = SimulationConfig(
+        **{key: value for key, value in simulation_values.items() if key in simulation_fields}
+    )
+    env = TinyWorldEnv(world_config, simulation_config, replay.seed)
     renderer = Renderer(f"TinyWorld Replay — {args.path.name}")
     renderer.center_on_agent(env)
     clock = pygame.time.Clock()

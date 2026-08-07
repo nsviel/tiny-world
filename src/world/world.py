@@ -4,7 +4,7 @@ from collections import deque
 
 import numpy as np
 
-from src.app.config import WorldConfig
+from .config import WorldConfig
 
 from .entities import Position, Predator, Tile
 from .validation import validate_world_config

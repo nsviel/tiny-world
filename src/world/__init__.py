@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 
+from .config import WorldConfig
 from .entities import Agent, Orientation, Position, Predator, Tile
 from .world import World
 
@@ -25,4 +26,5 @@ __all__ = [
     "Tile",
     "TinyWorldEnv",
     "World",
+    "WorldConfig",
 ]

@@ -4,11 +4,13 @@ from typing import Any
 
 import numpy as np
 
-from src.app.config import WorldConfig
 from src.simulation.actions import Action
+from src.simulation.config import SimulationConfig
 from src.simulation.observations import Observation, make_observation
 from src.simulation.rewards import StepEvents, calculate_reward
+from src.simulation.validation import validate_simulation_config
 
+from .config import WorldConfig
 from .entities import Agent, Orientation, Tile
 from .validation import validate_world_config
 from .world import World
@@ -26,14 +28,21 @@ class TinyWorldEnv:
 
     action_count = len(Action)
 
-    def __init__(self, config: WorldConfig | None = None, seed: int | None = None) -> None:
-        self.config = config or WorldConfig()
-        validate_world_config(self.config)
+    def __init__(
+        self,
+        world_config: WorldConfig | None = None,
+        simulation_config: SimulationConfig | None = None,
+        seed: int | None = None,
+    ) -> None:
+        self.world_config = world_config or WorldConfig()
+        self.simulation_config = simulation_config or SimulationConfig()
+        validate_world_config(self.world_config)
+        validate_simulation_config(self.simulation_config)
         self._seed = seed
         self.world: World
         self.agent: Agent
         self.elapsed_steps = 0
-        self.discovered = np.zeros((self.config.height, self.config.width), dtype=np.bool_)
+        self.discovered = np.zeros((self.world_config.height, self.world_config.width), dtype=np.bool_)
         self.last_events = StepEvents()
         self.terminated = False
         self.truncated = False
@@ -43,11 +52,11 @@ class TinyWorldEnv:
         if seed is not None:
             self._seed = seed
         # Reusing a seed reproduces the full world.
-        self.world = World(self.config, self._seed)
+        self.world = World(self.world_config, self._seed)
         self.agent = Agent(
             position=self.world.spawn_position,
             orientation=Orientation.NORTH,
-            energy=self.config.initial_energy,
+            energy=self.world_config.initial_energy,
         )
         self.elapsed_steps = 0
         self.discovered = np.zeros(self.world.shape, dtype=np.bool_)
@@ -68,27 +77,30 @@ class TinyWorldEnv:
         invalid = False
         ate_food = False
         if selected == Action.IDLE:
-            cost = self.config.idle_cost
+            cost = self.simulation_config.idle_cost
         elif selected == Action.MOVE_FORWARD:
-            cost = self.config.move_cost
+            cost = self.simulation_config.move_cost
             destination = self.agent.position.moved(self.agent.orientation.delta)
             if self.world.is_walkable(destination) and destination != self.world.predator.position:
                 self.agent.position = destination
             else:
                 invalid = True
         elif selected == Action.TURN_LEFT:
-            cost = self.config.turn_cost
+            cost = self.simulation_config.turn_cost
             self.agent.orientation = self.agent.orientation.left()
         elif selected == Action.TURN_RIGHT:
-            cost = self.config.turn_cost
+            cost = self.simulation_config.turn_cost
             self.agent.orientation = self.agent.orientation.right()
         else:
-            cost = self.config.eat_cost
+            cost = self.simulation_config.eat_cost
             row, col = self.agent.position.row, self.agent.position.col
             if Tile(int(self.world.tiles[row, col])) == Tile.FOOD:
                 self.world.tiles[row, col] = Tile.GROUND
                 self.agent.food_eaten += 1
-                self.agent.energy = min(self.config.max_energy, self.agent.energy + self.config.food_energy)
+                self.agent.energy = min(
+                                    self.world_config.max_energy,
+                                    self.agent.energy + self.world_config.food_energy,
+                                )
                 ate_food = True
             else:
                 invalid = True
@@ -99,7 +111,7 @@ class TinyWorldEnv:
             self.world.move_predator(self.agent.position)
             if self.world.predator.position == self.agent.position:
                 predator_hit = True
-                self.agent.energy -= self.config.predator_damage
+                self.agent.energy -= self.world_config.predator_damage
 
         self.elapsed_steps += 1
         died = self.agent.energy <= 0
@@ -109,12 +121,12 @@ class TinyWorldEnv:
             self.terminated = True
         self.truncated = bool(
             not self.terminated
-            and self.config.max_steps is not None
-            and self.elapsed_steps >= self.config.max_steps
+            and self.simulation_config.max_steps is not None
+            and self.elapsed_steps >= self.simulation_config.max_steps
         )
         discovered = self._update_discovery()
         self.last_events = StepEvents(invalid, ate_food, predator_hit, died, discovered)
-        reward = calculate_reward(self.last_events, self.config)
+        reward = calculate_reward(self.last_events, self.simulation_config)
         return self._observation(), reward, self.terminated, self.truncated, self._info()
 
 
@@ -125,16 +137,16 @@ class TinyWorldEnv:
             self.agent,
             self.world.predator,
             self.elapsed_steps,
-            self.config.view_size,
-            self.config.max_energy,
-            self.config.max_steps,
+            self.simulation_config.view_size,
+            self.world_config.max_energy,
+            self.simulation_config.max_steps,
         )
 
     def _update_discovery(self) -> int:
-        radius = self.config.view_size // 2
+        radius = self.simulation_config.view_size // 2
         row, col = self.agent.position.row, self.agent.position.col
-        r0, r1 = max(0, row - radius), min(self.config.height, row + radius + 1)
-        c0, c1 = max(0, col - radius), min(self.config.width, col + radius + 1)
+        r0, r1 = max(0, row - radius), min(self.world_config.height, row + radius + 1)
+        c0, c1 = max(0, col - radius), min(self.world_config.width, col + radius + 1)
         # Reward only newly visible cells.
         before = int(self.discovered[r0:r1, c0:c1].sum())
         self.discovered[r0:r1, c0:c1] = True

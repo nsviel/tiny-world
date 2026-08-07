@@ -1,6 +1,6 @@
 import numpy as np
 
-from src import Action, TinyWorldEnv, WorldConfig
+from src import Action, SimulationConfig, TinyWorldEnv
 
 
 def assert_observations_equal(first: object, second: object) -> None:
@@ -37,9 +37,9 @@ def test_reset_with_same_seed_restores_identical_world() -> None:
 
 
 def test_same_seed_and_actions_reproduce_every_transition() -> None:
-    config = WorldConfig(max_steps=50)
-    first = TinyWorldEnv(config, seed=2026)
-    second = TinyWorldEnv(config, seed=2026)
+    config = SimulationConfig(max_steps=50)
+    first = TinyWorldEnv(simulation_config=config, seed=2026)
+    second = TinyWorldEnv(simulation_config=config, seed=2026)
     actions = (
         Action.IDLE,
         Action.TURN_RIGHT,

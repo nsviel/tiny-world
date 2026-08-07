@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from src.app.config import WorldConfig
+from .config import SimulationConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,7 +14,7 @@ class StepEvents:
     discovered_cells: int = 0
 
 
-def calculate_reward(events: StepEvents, config: WorldConfig) -> float:
+def calculate_reward(events: StepEvents, config: SimulationConfig) -> float:
     """Return the additive reward for a transition."""
     # Compose reward from transition events.
     reward = config.step_reward

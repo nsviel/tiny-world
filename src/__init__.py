@@ -1,15 +1,15 @@
 """TinyWorld AI: a small deterministic, headless survival environment."""
 
-from .app.config import WorldConfig
 from .simulation import (
     OBSERVATION_CHANNELS,
     SCALAR_FEATURES,
     Action,
+    SimulationConfig,
     Observation,
     StepEvents,
     calculate_reward,
 )
-from .world import Agent, Orientation, Position, Predator, Tile, TinyWorldEnv, World
+from .world import Agent, Orientation, Position, Predator, Tile, TinyWorldEnv, World, WorldConfig
 
 __all__ = [
     "Action",
@@ -20,6 +20,7 @@ __all__ = [
     "Position",
     "Predator",
     "SCALAR_FEATURES",
+    "SimulationConfig",
     "StepEvents",
     "Tile",
     "TinyWorldEnv",

@@ -3,7 +3,8 @@
 from os import PathLike
 from pathlib import Path
 
-from src.rendering.control import Controls
+from src.rendering.engine.config import RenderingConfig
+from src.rendering.engine.control import Controls
 from src.rendering.renderer import Renderer
 from src.world.env import TinyWorldEnv
 
@@ -16,9 +17,14 @@ from .update import update_application
 class App:
     """Own the interactive session and coordinate one frame at a time."""
 
-    def __init__(self, agent_name: str = "rule", seed: int = 42) -> None:
+    def __init__(
+        self,
+        agent_name: str = "rule",
+        seed: int = 42,
+        rendering_config: RenderingConfig | None = None,
+    ) -> None:
         self.env = TinyWorldEnv(seed=seed)
-        self.renderer = Renderer()
+        self.renderer = Renderer(config=rendering_config)
         self.controls = Controls()
         self.state: ApplicationState = create_application_state(
             self.env,

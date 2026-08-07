@@ -9,10 +9,13 @@ from src.simulation.observations import Observation
 
 from src.world.entities import Tile
 
+from .entity import draw_agent, draw_predator
+from .tile import draw_food, draw_ground, draw_tree, draw_water
+
 if TYPE_CHECKING:
-    from .assets import AssetStore
-    from .camera import Camera
-    from .config import RenderingConfig
+    from .engine.assets import AssetStore
+    from .engine.camera import Camera
+    from .engine.config import RenderingConfig
 
 
 class WorldRenderer:
@@ -34,14 +37,14 @@ class WorldRenderer:
         viewport_width, viewport_height = viewport
         clip = self.screen.get_clip()
         self.screen.set_clip(pygame.Rect(0, 0, viewport_width, viewport_height))
-        for row in range(env.config.height):
-            for col in range(env.config.width):
+        for row in range(env.world_config.height):
+            for col in range(env.world_config.width):
                 rect = self._tile_rect(row, col)
                 if not rect.colliderect((0, 0, viewport_width, viewport_height)):
                     continue
                 self._draw_tile(env, row, col, rect)
-        self._draw_agent(env)
-        self._draw_predator(env)
+        draw_agent(self.screen, env.agent, self.camera, self.config)
+        draw_predator(self.screen, env.world.predator, self.camera, self.config)
         self.screen.set_clip(clip)
 
     def draw_observation(self, env: Any, observation: Observation) -> None:
@@ -71,118 +74,11 @@ class WorldRenderer:
     def _draw_tile(self, env: Any, row: int, col: int, rect: pygame.Rect) -> None:
         shade = ((row * 17 + col * 31) % 3) * 4
         tile = Tile(int(env.world.tiles[row, col]))
-        pygame.draw.rect(self.screen, (74 + shade, 137 + shade, 78 + shade), rect)
+        draw_ground(self.screen, rect, shade)
         if tile == Tile.WATER:
-            self._draw_water(rect, shade)
+            draw_water(self.screen, rect, shade)
         elif tile == Tile.TREE:
-            self._draw_tree(rect)
+            draw_tree(self.screen, rect, self.camera.zoom, self.assets)
         elif tile == Tile.FOOD:
-            self._draw_food(rect)
+            draw_food(self.screen, rect, self.camera.zoom, self.assets)
 
-    def _draw_water(self, rect: pygame.Rect, shade: int) -> None:
-        pygame.draw.rect(
-            self.screen,
-            (54, 132 + shade, 174 + shade),
-            rect,
-            border_radius=3,
-        )
-        pygame.draw.line(
-            self.screen,
-            (97, 175, 202),
-            (rect.left + 4, rect.centery),
-            (rect.right - 4, rect.centery),
-            1,
-        )
-
-    def _draw_tree(self, rect: pygame.Rect) -> None:
-        image = self.assets.get("tree", rect.size)
-        if image is not None:
-            self.screen.blit(image, rect)
-            return
-        cx, cy = rect.center
-        scale = self.camera.zoom
-        pygame.draw.ellipse(self.screen, (30, 70, 42), rect.move(round(3 * scale), round(4 * scale)))
-        pygame.draw.rect(
-            self.screen,
-            (105, 72, 42),
-            (cx - round(3 * scale), cy, max(2, round(6 * scale)), max(3, round(10 * scale))),
-        )
-        pygame.draw.circle(self.screen, (30, 92, 48), (cx, cy - round(3 * scale)), max(3, round(10 * scale)))
-        pygame.draw.circle(
-            self.screen,
-            (46, 116, 58),
-            (cx - round(4 * scale), cy - round(6 * scale)),
-            max(2, round(7 * scale)),
-        )
-
-    def _draw_food(self, rect: pygame.Rect) -> None:
-        image = self.assets.get("food", rect.size)
-        if image is not None:
-            self.screen.blit(image, rect)
-            return
-        pygame.draw.ellipse(
-            self.screen,
-            (35, 78, 40),
-            rect.inflate(-rect.width // 3, -rect.height // 2).move(2, 3),
-        )
-        cx, cy = rect.center
-        radius = max(2, round(3 * self.camera.zoom))
-        for dx, dy in ((-4, 1), (3, -2), (4, 4)):
-            pygame.draw.circle(
-                self.screen,
-                (191, 45, 72),
-                (cx + round(dx * self.camera.zoom), cy + round(dy * self.camera.zoom)),
-                radius,
-            )
-
-    def _entity_center(self, position: Any) -> tuple[int, int]:
-        cell = self.config.cell_size
-        return self.camera.world_to_screen(
-            (position.col + 0.5) * cell,
-            (position.row + 0.5) * cell,
-        )
-
-    def _draw_agent(self, env: Any) -> None:
-        center = self._entity_center(env.agent.position)
-        radius = max(4, round(9 * self.camera.zoom))
-        pygame.draw.ellipse(
-            self.screen,
-            (31, 66, 47),
-            (center[0] - radius, center[1] + radius // 2, radius * 2, radius),
-        )
-        pygame.draw.circle(self.screen, (240, 210, 88), center, radius)
-        delta = env.agent.orientation.delta
-        end = (
-            center[0] + round(delta[1] * radius * 1.5),
-            center[1] + round(delta[0] * radius * 1.5),
-        )
-        pygame.draw.line(
-            self.screen,
-            (255, 250, 220),
-            center,
-            end,
-            max(2, round(3 * self.camera.zoom)),
-        )
-
-    def _draw_predator(self, env: Any) -> None:
-        center = self._entity_center(env.world.predator.position)
-        radius = max(4, round(10 * self.camera.zoom))
-        pygame.draw.ellipse(
-            self.screen,
-            (65, 38, 39),
-            (center[0] - radius, center[1] + radius // 2, radius * 2, radius),
-        )
-        pygame.draw.circle(self.screen, (192, 57, 58), center, radius)
-        eye_radius = max(1, radius // 5)
-        pygame.draw.circle(
-            self.screen,
-            (245, 210, 165),
-            (center[0] - radius // 3, center[1] - radius // 4),
-            eye_radius,
-        )
-        pygame.draw.circle(
-            self.screen,
-            (245, 210, 165),
-            (center[0] + radius // 3, center[1] - radius // 4),
-            eye_radius,
-        )

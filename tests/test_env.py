@@ -1,21 +1,23 @@
 import pytest
 
-from src import Action, Orientation, Position, Tile, TinyWorldEnv, WorldConfig
+from src import Action, Orientation, Position, SimulationConfig, Tile, TinyWorldEnv, WorldConfig
 from src.agents import RandomAgent, RuleBasedAgent
 
 
 def controlled_env(**overrides: object) -> TinyWorldEnv:
-    values: dict[str, object] = {
+    world_values: dict[str, object] = {
         "width": 11,
         "height": 11,
         "food_count": 0,
         "water_ratio": 0.0,
         "tree_ratio": 0.0,
         "predator_detection_radius": 0,
-        "max_steps": 100,
     }
-    values.update(overrides)
-    env = TinyWorldEnv(WorldConfig(**values), seed=7)
+    simulation_values: dict[str, object] = {"max_steps": 100}
+    for key, value in overrides.items():
+        target = world_values if key in WorldConfig.__dataclass_fields__ else simulation_values
+        target[key] = value
+    env = TinyWorldEnv(WorldConfig(**world_values), SimulationConfig(**simulation_values), seed=7)
     env.world.tiles.fill(Tile.GROUND)
     env.agent.position = Position(5, 5)
     env.agent.orientation = Orientation.NORTH
@@ -32,7 +34,7 @@ def test_obstacle_is_impassable_and_move_still_costs_energy() -> None:
     _, _, terminated, truncated, info = env.step(Action.MOVE_FORWARD)
 
     assert env.agent.position == start
-    assert env.agent.energy == pytest.approx(energy - env.config.move_cost)
+    assert env.agent.energy == pytest.approx(energy - env.simulation_config.move_cost)
     assert info["events"].invalid_action is True
     assert not terminated
     assert not truncated
@@ -44,7 +46,7 @@ def test_energy_decreases_for_an_action() -> None:
 
     env.step(Action.TURN_RIGHT)
 
-    assert env.agent.energy == pytest.approx(energy - env.config.turn_cost)
+    assert env.agent.energy == pytest.approx(energy - env.simulation_config.turn_cost)
 
 
 def test_eating_collects_food_and_restores_energy() -> None:
@@ -56,7 +58,9 @@ def test_eating_collects_food_and_restores_energy() -> None:
 
     assert env.world.tiles[5, 5] == Tile.GROUND
     assert env.agent.food_eaten == 1
-    assert env.agent.energy == pytest.approx(50.0 + env.config.food_energy - env.config.eat_cost)
+    assert env.agent.energy == pytest.approx(
+        50.0 + env.world_config.food_energy - env.simulation_config.eat_cost
+    )
     assert info["food_collected"] == 1
     assert info["events"].ate_food is True
     assert not terminated
@@ -91,8 +95,8 @@ def test_existing_agents_run_1000_total_steps_with_episode_resets(agent_type: ty
             food_count=0,
             water_ratio=0.0,
             tree_ratio=0.0,
-            max_steps=20,
         ),
+        SimulationConfig(max_steps=20),
         seed=100,
     )
     agent = agent_type(seed=100)

@@ -7,8 +7,9 @@ from collections.abc import Callable, Sequence
 from secrets import randbits
 
 from src.agents import BaseAgent, RandomAgent, RuleBasedAgent
-from src.app.config import WorldConfig
 from src.world.env import TinyWorldEnv
+
+from .config import SimulationConfig
 
 from .metrics import EpisodeAggregate, EpisodeMetrics, aggregate_episodes
 
@@ -69,7 +70,7 @@ def evaluate(
     else:
         raise TypeError("agent must be 'rule', 'random', or a BaseAgent instance")
 
-    env = TinyWorldEnv(config=WorldConfig(max_steps=max_steps), seed=seed)
+    env = TinyWorldEnv(simulation_config=SimulationConfig(max_steps=max_steps), seed=seed)
     results: list[EpisodeMetrics] = []
     for episode_index in range(episodes):
         # Derive reproducible, distinct episode streams.

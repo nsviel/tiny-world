@@ -4,6 +4,7 @@ import pytest
 from src import (
     OBSERVATION_CHANNELS,
     SCALAR_FEATURES,
+    SimulationConfig,
     Orientation,
     Position,
     Tile,
@@ -13,7 +14,7 @@ from src import (
 
 
 def test_observation_has_expected_shapes_dtypes_and_channels() -> None:
-    env = TinyWorldEnv(WorldConfig(view_size=11), seed=23)
+    env = TinyWorldEnv(simulation_config=SimulationConfig(view_size=11), seed=23)
 
     observation, _ = env.reset(seed=23)
 
@@ -36,9 +37,9 @@ def test_scalar_features_encode_energy_orientation_food_and_time() -> None:
         tree_ratio=0.0,
         initial_energy=80.0,
         max_energy=100.0,
-        max_steps=10,
     )
-    env = TinyWorldEnv(config, seed=3)
+    simulation_config = SimulationConfig(max_steps=10)
+    env = TinyWorldEnv(config, simulation_config, seed=3)
     env.world.tiles.fill(Tile.GROUND)
     env.agent.position = Position(5, 5)
     env.agent.orientation = Orientation.WEST

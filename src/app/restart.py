@@ -10,7 +10,14 @@ from .replay import ReplayRecorder
 from .state import ApplicationState
 
 
-def _create_agent(name: str, seed: int) -> BaseAgent:
+def _config_dict(env: TinyWorldEnv) -> dict[str, object]:
+    return {
+        "world": asdict(env.world_config),
+        "simulation": asdict(env.simulation_config),
+    }
+
+
+def _create_agent(name: str, seed: int | None) -> BaseAgent:
     if name == "rule":
         return RuleBasedAgent(seed)
     if name == "random":
@@ -33,7 +40,7 @@ def create_application_state(
         seed=seed,
         observation=observation,
         policy=policy,
-        recorder=ReplayRecorder(seed, asdict(env.config), {"agent": agent_name}),
+        recorder=ReplayRecorder(seed, _config_dict(env), {"agent": agent_name}),
     )
     renderer.reset_effects()
     renderer.center_on_agent(env)
@@ -53,12 +60,15 @@ def restart_episode(
 
     state.observation = observation
     state.policy = policy
+    state.seed_input = "" if state.seed is None else str(state.seed)
+    state.seed_input_active = False
     state.recorder = ReplayRecorder(
         state.seed,
-        asdict(env.config),
+        _config_dict(env),
         {"agent": state.agent_name},
     )
     state.game_over = False
+    state.auto_loop_timer = 0.0
     state.accumulator = 0.0
     state.total_reward = 0.0
     state.last_action = None
