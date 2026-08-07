@@ -17,6 +17,8 @@ class RenderingConfig:
     font_size: int = 20
     small_font_size: int = 20
     title_font_size: int = 40
+    target_fps: int = 60
+    max_frame_time: float = 0.1  # Stall cap
 
     zoom_default: float = 1.0
     zoom_min: float = 0.45

@@ -212,8 +212,7 @@ def main(argv: list[str] | None = None) -> int:
     if not replay.steps:
         parser.error("le replay ne contient aucune étape")
 
-    # Keep headless replay recording free of Pygame.
-    import pygame
+    # Keep headless replay recording free of rendering imports.
     from src.world.env import TinyWorldEnv
 
     from src.rendering.engine.control import ReplayControls
@@ -235,8 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     env = TinyWorldEnv(world_config, simulation_config, replay.seed)
     renderer = Renderer(f"TinyWorld Replay — {args.path.name}")
-    renderer.center_on_agent(env)
-    clock = pygame.time.Clock()
+    renderer.camera.center_on_agent(env)
     index = 0
     controls = ReplayControls()
     render_state = RenderState(
@@ -246,7 +244,7 @@ def main(argv: list[str] | None = None) -> int:
     accumulator = 0.0
     total_reward = 0.0
     while controls.running:
-        dt = min(clock.tick(60) / 1000.0, .1)
+        dt = renderer.display.tick()
         commands = controls.update(renderer, env)
         if commands.restart:
             index = 0

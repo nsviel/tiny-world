@@ -5,7 +5,7 @@ from pathlib import Path
 import pygame
 
 
-DEFAULT_ASSETS_ROOT = Path(__file__).resolve().parents[2] / "assets"
+DEFAULT_ASSETS_ROOT = Path(__file__).resolve().parents[3] / "assets"
 
 
 class AssetStore:

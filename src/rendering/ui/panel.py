@@ -7,7 +7,7 @@ import pygame
 from src.app.state import RenderState
 from src.world.entities import Tile
 
-from .engine.config import RenderingConfig
+from ..engine.config import RenderingConfig
 
 
 class Panel:

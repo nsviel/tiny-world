@@ -43,7 +43,7 @@ def create_application_state(
         recorder=ReplayRecorder(seed, _config_dict(env), {"agent": agent_name}),
     )
     renderer.reset_effects()
-    renderer.center_on_agent(env)
+    renderer.camera.center_on_agent(env)
     return state
 
 
@@ -74,4 +74,4 @@ def restart_episode(
     state.last_action = None
 
     renderer.reset_effects()
-    renderer.center_on_agent(env)
+    renderer.camera.center_on_agent(env)

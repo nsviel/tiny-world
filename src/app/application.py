@@ -33,6 +33,9 @@ class App:
             seed,
         )
 
+    def tick(self) -> float:
+        return self.renderer.display.tick()
+
     @property
     def running(self) -> bool:
         return self.controls.running
