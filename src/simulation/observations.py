@@ -4,7 +4,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from src.world.entities import Agent, Position, Predator, Tile
+from src.world.entity import Agent, Position, Predator
+from src.world.environment.tile import Tile
 
 
 OBSERVATION_CHANNELS = ("obstacles", "food", "predator", "agent")

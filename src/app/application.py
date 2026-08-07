@@ -4,9 +4,10 @@ from os import PathLike
 from pathlib import Path
 
 from src.rendering.engine.config import RenderingConfig
-from src.rendering.engine.control import Controls
 from src.rendering.renderer import Renderer
-from src.world.env import TinyWorldEnv
+
+from .control import Controls
+from src.world.environment.env import TinyWorldEnv
 
 from .replay import save_application_replay
 from .restart import create_application_state

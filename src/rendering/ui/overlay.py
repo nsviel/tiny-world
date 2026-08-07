@@ -16,6 +16,9 @@ class Overlay:
         self.font = font
         self.title_font = title_font
 
+    def draw_black(self) -> None:
+        self.screen.fill((0, 0, 0))
+
     def draw(
         self,
         title: str,

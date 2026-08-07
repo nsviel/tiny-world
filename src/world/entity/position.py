@@ -1,14 +1,7 @@
-"""Small, serializable entity and geometry types."""
+"""Position and orientation types."""
 
 from dataclasses import dataclass
 from enum import IntEnum
-
-
-class Tile(IntEnum):
-    GROUND = 0
-    WATER = 1
-    TREE = 2
-    FOOD = 3
 
 
 class Orientation(IntEnum):
@@ -35,17 +28,3 @@ class Position:
 
     def moved(self, delta: tuple[int, int]) -> "Position":
         return Position(self.row + delta[0], self.col + delta[1])
-
-
-@dataclass(slots=True)
-class Agent:
-    position: Position
-    orientation: Orientation = Orientation.NORTH
-    energy: float = 100.0
-    food_eaten: int = 0
-    alive: bool = True
-
-
-@dataclass(slots=True)
-class Predator:
-    position: Position

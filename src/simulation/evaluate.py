@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 from secrets import randbits
 
 from src.agents import BaseAgent, RandomAgent, RuleBasedAgent
-from src.world.env import TinyWorldEnv
+from src.world.environment.env import TinyWorldEnv
 
 from .config import SimulationConfig
 

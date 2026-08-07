@@ -53,7 +53,7 @@ class Renderer:
 
     def draw(self, env: Any, state: RenderState) -> None:
         if state.auto_loop_timer > 0.0:
-            self.screen.fill((0, 0, 0))
+            self.overlay.draw_black()
             self.display.present()
             return
 

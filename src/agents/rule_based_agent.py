@@ -6,7 +6,7 @@ import numpy as np
 
 from src.simulation.actions import Action
 from src.simulation.observations import Observation
-from src.world.entities import Orientation
+from src.world.entity import Orientation
 
 from .base import BaseAgent
 

@@ -5,7 +5,7 @@ from typing import Any
 import pygame
 
 from src.app.state import RenderState
-from src.world.entities import Tile
+from src.world.environment.tile import Tile
 
 from ..engine.config import RenderingConfig
 

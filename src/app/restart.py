@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 from src.agents import BaseAgent, RandomAgent, RuleBasedAgent
 from src.rendering.renderer import Renderer
-from src.world.env import TinyWorldEnv
+from src.world.environment.env import TinyWorldEnv
 
 from .replay import ReplayRecorder
 from .state import ApplicationState

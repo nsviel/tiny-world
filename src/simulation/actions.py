@@ -1,4 +1,4 @@
-"""Actions accepted by :class:`src.world.env.TinyWorldEnv`."""
+"""Actions accepted by :class:`src.world.environment.env.TinyWorldEnv`."""
 
 from enum import IntEnum
 

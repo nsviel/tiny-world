@@ -9,7 +9,7 @@ from .simulation import (
     StepEvents,
     calculate_reward,
 )
-from .world import Agent, Orientation, Position, Predator, Tile, TinyWorldEnv, World, WorldConfig
+from .world import Agent, Orientation, Position, Predator, Tile, TinyWorldEnv, World, WorldConfig, WorldMap
 
 __all__ = [
     "Action",
@@ -26,5 +26,6 @@ __all__ = [
     "TinyWorldEnv",
     "World",
     "WorldConfig",
+    "WorldMap",
     "calculate_reward",
 ]

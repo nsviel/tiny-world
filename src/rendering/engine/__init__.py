@@ -3,14 +3,13 @@
 from .assets import AssetStore
 from .camera import Camera
 from .config import RenderingConfig
-from .control import ControlCommands, Controls, ReplayControls
+from .control import CameraControl, ReplayControls
 from .display import Display
 
 __all__ = [
     "AssetStore",
     "Camera",
-    "ControlCommands",
-    "Controls",
+    "CameraControl",
     "Display",
     "RenderingConfig",
     "ReplayControls",

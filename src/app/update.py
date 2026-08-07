@@ -1,9 +1,9 @@
 """Per-frame application update orchestration."""
 
-from src.rendering.engine.control import Controls
 from src.rendering.renderer import Renderer
-from src.world.env import TinyWorldEnv
+from src.world.environment.env import TinyWorldEnv
 
+from .control import Controls
 from .restart import restart_episode
 from .state import ApplicationState
 

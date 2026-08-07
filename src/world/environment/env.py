@@ -10,10 +10,13 @@ from src.simulation.observations import Observation, make_observation
 from src.simulation.rewards import StepEvents, calculate_reward
 from src.simulation.validation import validate_simulation_config
 
+from ..behavior import update_predator
+from ..entity import Agent, Orientation
 from .config import WorldConfig
-from .entities import Agent, Orientation, Tile
+from .generation import generate_world
+from .map import WorldMap
+from .tile import Tile
 from .validation import validate_world_config
-from .world import World
 
 
 class TinyWorldEnv:
@@ -39,7 +42,7 @@ class TinyWorldEnv:
         validate_world_config(self.world_config)
         validate_simulation_config(self.simulation_config)
         self._seed = seed
-        self.world: World
+        self.world: WorldMap
         self.agent: Agent
         self.elapsed_steps = 0
         self.discovered = np.zeros((self.world_config.height, self.world_config.width), dtype=np.bool_)
@@ -52,7 +55,7 @@ class TinyWorldEnv:
         if seed is not None:
             self._seed = seed
         # Reusing a seed reproduces the full world.
-        self.world = World(self.world_config, self._seed)
+        self.world = generate_world(self.world_config, self._seed)
         self.agent = Agent(
             position=self.world.spawn_position,
             orientation=Orientation.NORTH,
@@ -108,7 +111,7 @@ class TinyWorldEnv:
         self.agent.energy -= cost
         predator_hit = False
         if self.agent.energy > 0:
-            self.world.move_predator(self.agent.position)
+            update_predator(self.world, self.world_config, self.agent.position)
             if self.world.predator.position == self.agent.position:
                 predator_hit = True
                 self.agent.energy -= self.world_config.predator_damage

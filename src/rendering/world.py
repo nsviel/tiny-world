@@ -7,7 +7,7 @@ import pygame
 
 from src.simulation.observations import Observation
 
-from src.world.entities import Tile
+from src.world.environment.tile import Tile
 
 from .entity import draw_agent, draw_predator
 from .tile import draw_food, draw_ground, draw_tree, draw_water
